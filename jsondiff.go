@@ -58,6 +58,8 @@ type Options struct {
 	// When provided, this function will be used to compare two numbers. By default numbers are compared using their
 	// literal representation byte by byte.
 	CompareNumbers func(a, b json.Number) bool
+	// When provided, this function will be used to compate two strings.
+	CompareStrings func(a, b string) bool
 	// When true, only differences will be printed. By default, it will print the full json.
 	SkipMatches bool
 }
@@ -131,6 +133,14 @@ type context struct {
 func (ctx *context) compareNumbers(a, b json.Number) bool {
 	if ctx.opts.CompareNumbers != nil {
 		return ctx.opts.CompareNumbers(a, b)
+	} else {
+		return a == b
+	}
+}
+
+func (ctx *context) compareString(a, b string) bool {
+	if ctx.opts.CompareStrings != nil {
+		return ctx.opts.CompareStrings(a, b)
 	} else {
 		return a == b
 	}
@@ -576,7 +586,7 @@ func (ctx *context) printDiff(a, b interface{}) string {
 			}
 		case string:
 			bb, ok := b.(string)
-			if !ok || aa != bb {
+			if !ok || !ctx.compareString(aa, bb) {
 				ctx.printMismatch(&buf, a, b)
 				ctx.result(NoMatch)
 				return ctx.finalize(&buf)
